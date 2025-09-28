@@ -34,20 +34,21 @@
       min-height: 100vh;
     }
 
-    /* Sidebar */
-    .sidebar {
-      width: 280px;
-      background: var(--dark);
-      color: white;
-      padding: 20px 0;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      right: 0; /* چون dir="rtl" است */
-      transition: transform 0.3s ease;
-      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); /* سایه از سمت چپ */
-      z-index: 1040;
-    }
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: var(--dark);
+  color: white;
+  padding: 20px 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0; /* چون dir="rtl" است */
+  transition: transform 0.3s ease;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); /* سایه از سمت چپ */
+  z-index: 1040;
+  overflow-y: auto; /* اجازه اسکرول در صورت طولانی بودن منو */
+}
 
     .sidebar-header {
       padding: 0 20px 20px;
@@ -295,6 +296,7 @@
       <li><a href="step4_reports.html"><span class="icon-report"></span> گزارش‌ها</a></li>
       <li><a href="template_manager.html"><span class="icon-template"></span> مدیریت الگوها</a></li>
       <li><a href="step5_aggregate.html"><span class="icon-template"></span> تجمیع ارزیابی</a></li>
+      <li><a href="comprehensive_hr_report.html"><span class="icon-template"></span> گزارش مقایسه ای جامع</a></li>
     </ul>
   </div>
 
