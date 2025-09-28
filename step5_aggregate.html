@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تجمیع ارزیابی‌های واحدها</title>
-  <!-- Bootstrap 5 CSS - بدون فاصله اضافه -->
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- XLSX for Excel export - بدون فاصله اضافه -->
+  <!-- XLSX for Excel export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
     :root {
       --primary-color: #007bff;
       --primary-hover: #0056b3;
@@ -25,7 +25,7 @@
     }
 
     body {
-        font-family: 'Vazirmatn', sans-serif;
+      font-family: 'Vazirmatn', sans-serif;
       background: var(--background-light);
       padding: 20px 0;
       margin: 0;
@@ -209,29 +209,28 @@
     <div id="aggregated-table-container"></div>
   </div>
 
-  <!-- Bootstrap JS - بدون فاصله اضافه -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    let aggregatedEvaluations = []; // شامل امتیاز تعدیل‌شده
+    let aggregatedEvaluations = [];
 
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('file-input');
     const statusDiv = document.getElementById('status');
     const tableContainer = document.getElementById('aggregated-table-container');
 
-    // تابع دانلود مدرن JSON
     function downloadJSON(data, filename) {
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     uploadArea.addEventListener('click', () => fileInput.click());
@@ -262,7 +261,6 @@
 
       let loadedCount = 0;
       let totalCount = files.length;
-      let newRecordsCount = 0;
       let allUnits = [];
 
       statusDiv.textContent = `در حال پردازش ${totalCount} فایل...`;
@@ -276,46 +274,38 @@
           try {
             const jsonData = JSON.parse(e.target.result);
             
-            // پردازش فایل با ساختار جدید (حاوی metadata)
             let evaluations = [];
             let unitAverage = 0;
             
             if (jsonData.metadata && jsonData.evaluations) {
-                // فایل جدید (با metadata)
                 evaluations = jsonData.evaluations;
                 unitAverage = jsonData.metadata.unitAverage || 0;
             } else if (Array.isArray(jsonData)) {
-                // فایل قدیمی (فقط آرایه)
                 evaluations = jsonData;
-                // محاسبه میانگین واحد از داده‌ها
                 const total = evaluations.reduce((sum, e) => sum + (e.finalScore || 0), 0);
                 unitAverage = evaluations.length > 0 ? (total / evaluations.length) : 0;
             } else {
                 throw new Error("ساختار فایل نامعتبر است.");
             }
             
-            // ذخیره اطلاعات واحد برای محاسبه بعدی
             allUnits.push({ evaluations, unitAverage });
 
             loadedCount++;
 
             if (loadedCount === totalCount) {
-                // مرحله ۱: جمع‌آوری تمام ارزیابی‌ها
                 const allEvals = [];
                 allUnits.forEach(unit => {
                     unit.evaluations.forEach(eval => {
                         allEvals.push({
                             ...eval,
-                            _unitAverage: unit.unitAverage // ذخیره میانگین واحد برای هر فرد
+                            _unitAverage: unit.unitAverage
                         });
                     });
                 });
 
-                // مرحله ۲: محاسبه میانگین کل سازمان
                 const totalScore = allEvals.reduce((sum, e) => sum + (e.finalScore || 0), 0);
                 const overallAverage = allEvals.length > 0 ? (totalScore / allEvals.length) : 0;
 
-                // مرحله ۳: تعدیل امتیاز هر فرد
                 const adjustedEvals = allEvals.map(eval => {
                     const rawScore = eval.finalScore || 0;
                     const unitAvg = eval._unitAverage || 0;
@@ -329,13 +319,12 @@
                     };
                 });
 
-                // مرحله ۴: حذف فیلدهای موقت و ذخیره
                 aggregatedEvaluations = adjustedEvals.map(e => {
                     const { _unitAverage, ...rest } = e;
                     return rest;
                 });
 
-                newRecordsCount = aggregatedEvaluations.length;
+                const newRecordsCount = aggregatedEvaluations.length;
 
                 if (newRecordsCount > 0) {
                     statusDiv.innerHTML = `
@@ -378,53 +367,147 @@
         return;
       }
 
-      // پیدا کردن میانگین کل از اولین رکورد
       const overallAvg = aggregatedEvaluations[0]?.overallAverage || 0;
 
       let html = `
         <h2 class="mt-4 mb-3">📋 لیست ارزیابی‌های تعدیل شده (${aggregatedEvaluations.length} رکورد)</h2>
         <p class="text-center mb-3"><strong>میانگین کل سازمان: ${overallAvg.toFixed(2)}</strong></p>
+        
+        <div class="mb-3">
+          <input type="text" id="searchInput" class="form-control" placeholder="جستجو در نام، کد پرسنلی، سمت، واحد یا گروه...">
+        </div>
+
         <div class="table-responsive">
-        <table class="report-table table table-bordered align-middle">
-          <thead>
-            <tr>
-              <th>ردیف</th>
-              <th>کد پرسنلی</th>
-              <th>نام پرسنل</th>
-              <th>سمت</th>
-              <th>واحد</th> <!-- ✅ ستون جدید -->
-              <th>گروه</th>
-              <th>امتیاز خام</th>
-              <th>میانگین واحد</th>
-              <th>امتیاز تعدیل‌شده</th>
-            </tr>
-          </thead>
-          <tbody>
+          <table class="report-table table table-bordered align-middle">
+            <thead>
+              <tr>
+                <th>ردیف</th>
+                <th>کد پرسنلی</th>
+                <th>نام پرسنل</th>
+                <th>سمت</th>
+                <th>واحد</th>
+                <th>گروه</th>
+                <th>امتیاز خام</th>
+                <th>میانگین واحد</th>
+                <th>امتیاز تعدیل‌شده</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+          </table>
+        </div>
+
+        <nav aria-label="صفحه‌بندی" class="mt-4">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
       `;
 
-      aggregatedEvaluations.forEach((eval, index) => {
-        const groupName = getGroupName(eval.group);
-        // ✅ نمایش "واحد"
-        const unitName = eval.employeeUnit || 'بدون واحد';
-        const scoreClass = eval.adjustedScore >= 80 ? 'high' : eval.adjustedScore < 60 ? 'low' : '';
-        
-        html += `
-          <tr>
-            <td>${index + 1}</td>
+      tableContainer.innerHTML = html;
+
+      let currentPage = 1;
+      const rowsPerPage = 10;
+      let filteredData = [...aggregatedEvaluations];
+
+      function displayPage(page) {
+        const startIndex = (page - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const paginatedData = filteredData.slice(startIndex, endIndex);
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        paginatedData.forEach((eval, index) => {
+          const actualIndex = startIndex + index + 1;
+          const groupName = getGroupName(eval.group);
+          const unitName = eval.employeeUnit || 'بدون واحد';
+          const scoreClass = eval.adjustedScore >= 80 ? 'high' : eval.adjustedScore < 60 ? 'low' : '';
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${actualIndex}</td>
             <td>${eval.employeeId || '---'}</td>
             <td class="text-end">${eval.employeeName || '---'}</td>
             <td>${eval.employeePosition || '---'}</td>
-            <td>${unitName}</td> <!-- ✅ ستون واحد -->
+            <td>${unitName}</td>
             <td>${groupName}</td>
             <td>${parseFloat(eval.rawScore).toFixed(2)}</td>
             <td>${parseFloat(eval.unitAverage).toFixed(2)}</td>
             <td class="score-adjusted ${scoreClass}">${parseFloat(eval.adjustedScore).toFixed(2)}</td>
-          </tr>
-        `;
+          `;
+          tbody.appendChild(row);
+        });
+
+        renderPagination(page, Math.ceil(filteredData.length / rowsPerPage));
+      }
+
+      function renderPagination(currentPage, totalPages) {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" aria-label="قبلی">&laquo;</a>`;
+        prevLi.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (currentPage > 1) {
+            currentPage--;
+            displayPage(currentPage);
+          }
+        });
+        pagination.appendChild(prevLi);
+
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+          startPage = Math.max(1, endPage - 4);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+          const li = document.createElement('li');
+          li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+          li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+          li.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = i;
+            displayPage(currentPage);
+          });
+          pagination.appendChild(li);
+        }
+
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" aria-label="بعدی">&raquo;</a>`;
+        nextLi.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (currentPage < totalPages) {
+            currentPage++;
+            displayPage(currentPage);
+          }
+        });
+        pagination.appendChild(nextLi);
+      }
+
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', () => {
+        const term = searchInput.value.trim().toLowerCase();
+        if (term === '') {
+          filteredData = [...aggregatedEvaluations];
+        } else {
+          filteredData = aggregatedEvaluations.filter(item =>
+            (item.employeeName || '').toLowerCase().includes(term) ||
+            (item.employeeId || '').toString().includes(term) ||
+            (item.employeePosition || '').toLowerCase().includes(term) ||
+            (item.employeeUnit || '').toLowerCase().includes(term) ||
+            getGroupName(item.group).toLowerCase().includes(term)
+          );
+        }
+        currentPage = 1;
+        displayPage(currentPage);
       });
 
-      html += `</tbody></table></div>`;
-      tableContainer.innerHTML = html;
+      displayPage(currentPage);
     }
 
     function exportAggregatedJSON() {
@@ -449,7 +532,7 @@
         'کد پرسنلی': eval.employeeId,
         'نام و نام خانوادگی': eval.employeeName,
         'سمت': eval.employeePosition,
-        'واحد': eval.employeeUnit || 'بدون واحد', // ✅ اضافه شد
+        'واحد': eval.employeeUnit || 'بدون واحد',
         'گروه ارزیابی': getGroupName(eval.group),
         'امتیاز خام': parseFloat(eval.rawScore).toFixed(2),
         'میانگین واحد': parseFloat(eval.unitAverage).toFixed(2),
