@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 گزارش جامع ارزیابی عملکرد (تعدیل شده)</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- XLSX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    :root {
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --secondary-color: #6f42c1;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --background-light: #f4f7f9;
+      --card-bg: #ffffff;
+      --text-dark: #34495e;
+      --border-color: #e0e6ed;
+    }
+
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: var(--background-light);
+      padding: 20px 0;
+      margin: 0;
+      direction: rtl;
+    }
+
+    .custom-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--secondary-color);
+      margin-bottom: 30px;
+      border-bottom: 3px solid var(--secondary-color);
+      display: inline-block;
+      padding-bottom: 10px;
+      width: 100%;
+    }
+
+    h2 {
+      color: var(--text-dark);
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .stat-card {
+      border-right: 5px solid var(--primary-color);
+    }
+    .stat-card.avg { border-right-color: var(--success-color); }
+    .stat-card.count { border-right-color: var(--secondary-color); }
+    .stat-card.high { border-right-color: var(--success-color); }
+    .stat-card.low { border-right-color: var(--danger-color); }
+
+    .stat-title {
+      font-size: 1em;
+      color: #7f8c8d;
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-size: 2.2em;
+      font-weight: bold;
+      color: var(--text-dark);
+      line-height: 1;
+    }
+    .stat-card.avg .stat-value { color: var(--success-color); }
+    .stat-card.count .stat-value { color: var(--secondary-color); }
+    .stat-card.high .stat-value { color: var(--success-color); }
+    .stat-card.low .stat-value { color: var(--danger-color); }
+
+    .filter-actions {
+      background: rgba(111, 66, 193, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-box {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      height: 350px;
+      position: relative;
+    }
+
+    .report-table-container {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .report-table .score {
+      font-weight: bold;
+      text-align: center;
+    }
+    .report-table .high { color: var(--success-color); }
+    .report-table .low { color: var(--danger-color); }
+    .report-table .medium { color: var(--warning-color); }
+
+    .btn-export {
+      padding: 8px 16px;
+    }
+
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pagination-info {
+      font-size: 0.95em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="custom-container">
+    <a href="index.html" class="btn btn-danger mb-3">← بازگشت به داشبورد اصلی</a>
+    
+    <h1>📈 گزارش جامع ارزیابی عملکرد (امتیاز تعدیل‌شده)</h1>
+
+    <!-- آمار کلیدی -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card count h-100">
+          <div class="card-body">
+            <span class="stat-title">تعداد کل پرسنل</span>
+            <span class="stat-value" id="total-count">۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card avg h-100">
+          <div class="card-body">
+            <span class="stat-title">میانگین امتیاز تعدیل‌شده</span>
+            <span class="stat-value" id="avg-adjusted">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card high h-100">
+          <div class="card-body">
+            <span class="stat-title">بالاترین امتیاز</span>
+            <span class="stat-value" id="max-score">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card low h-100">
+          <div class="card-body">
+            <span class="stat-title">پایین‌ترین امتیاز</span>
+            <span class="stat-value" id="min-score">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- فیلترها -->
+    <div class="filter-actions">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="filter-unit" class="form-label fw-bold">فیلتر بر اساس واحد:</label>
+          <select id="filter-unit" class="form-select" onchange="applyFilters()">
+            <option value="all">همه واحدها</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="filter-group" class="form-label fw-bold">گروه ارزیابی:</label>
+          <select id="filter-group" class="form-select" onchange="applyFilters()">
+            <option value="all">همه گروه‌ها</option>
+            <option value="1">عملیاتی/فنی</option>
+            <option value="2">کارشناسی/تخصصی</option>
+            <option value="3">مدیریتی/کلیدی</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="search-input" class="form-label fw-bold">جستجو (نام/کد):</label>
+          <input type="search" id="search-input" class="form-control" oninput="applyFilters()" placeholder="جستجو...">
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+          <button class="btn btn-success btn-export" onclick="exportExcel()">خروجی اکسل 📊</button>
+          <button class="btn btn-secondary btn-export" onclick="exportJSON()">خروجی JSON</button>
+          <button class="btn btn-primary btn-export" onclick="document.getElementById('json-upload').click()">بارگذاری JSON</button>
+          <button class="btn btn-info btn-export" onclick="resetFilters()">بازنشانی</button>
+
+          <input type="file" id="json-upload" accept=".json" style="display:none;" onchange="loadJsonFromFile(this.files[0])">
+        </div>
+      </div>
+    </div>
+
+    <!-- نمودارها -->
+    <h2>📊 نمودارهای تحلیلی</h2>
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <canvas id="adjusted-distribution-chart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <canvas id="units-comparison-chart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <canvas id="groups-distribution-chart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <canvas id="raw-vs-adjusted-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- جدول جامع -->
+    <h2>📋 جدول جامع ارزیابی‌های تعدیل شده</h2>
+    <div class="table-responsive report-table-container">
+      <table class="table table-bordered align-middle mb-0">
+        <thead class="table-secondary">
+          <tr>
+            <th>ردیف</th>
+            <th>کد پرسنلی</th>
+            <th>نام و نام خانوادگی</th>
+            <th>سمت</th>
+            <th>واحد</th>
+            <th>گروه</th>
+            <th>امتیاز خام</th>
+            <th>میانگین واحد</th>
+            <th>امتیاز تعدیل‌شده</th>
+            <th>تاریخ</th>
+          </tr>
+        </thead>
+        <tbody id="report-table-body">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-controls">
+      <button class="btn btn-outline-secondary" id="prev-page" onclick="goToPage(currentPage - 1)" disabled>قبلی</button>
+      <span class="pagination-info" id="page-info">صفحه 1 از 1</span>
+      <button class="btn btn-outline-secondary" id="next-page" onclick="goToPage(currentPage + 1)" disabled>بعدی</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let allEvaluations = [];
+    let filteredEvaluations = [];
+    let charts = {};
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    // نام گروه‌ها
+    function getGroupName(groupNum) {
+      const names = { 1: "عملیاتی/فنی", 2: "کارشناسی/تخصصی", 3: "مدیریتی/کلیدی" };
+      return names[groupNum] || "نامشخص";
+    }
+
+    // رنگ امتیاز
+    function getScoreClass(score) {
+      if (score >= 90) return 'high';
+      if (score >= 80) return 'medium';
+      if (score >= 70) return 'medium';
+      if (score < 60) return 'low';
+      return '';
+    }
+
+    // دانلود JSON
+    function downloadJSON(data, filename) {
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // بارگذاری داده از localStorage
+    function loadData() {
+      const saved = localStorage.getItem('evaluations');
+      if (saved) {
+        try {
+          allEvaluations = JSON.parse(saved);
+          allEvaluations.forEach(e => {
+            e.rawScore = parseFloat(e.rawScore) || 0;
+            e.adjustedScore = parseFloat(e.adjustedScore) || 0;
+            e.unitAverage = parseFloat(e.unitAverage) || 0;
+            e.group = parseInt(e.group) || 0;
+          });
+          populateUnitFilter();
+          applyFilters();
+        } catch (e) {
+          console.error("خطا در بارگذاری داده:", e);
+          document.getElementById('report-table-body').innerHTML = '<tr><td colspan="10" class="text-center text-danger">خطا در بارگذاری داده‌ها</td></tr>';
+        }
+      } else {
+        document.getElementById('report-table-body').innerHTML = '<tr><td colspan="10" class="text-center text-muted">هیچ داده‌ای یافت نشد. لطفاً ابتدا فایل‌های ارزیابی را در بخش «تجمیع» بارگذاری کنید یا یک فایل JSON آپلود کنید.</td></tr>';
+        document.getElementById('page-info').textContent = 'صفحه 1 از 1';
+        document.getElementById('prev-page').disabled = true;
+        document.getElementById('next-page').disabled = true;
+      }
+    }
+
+    // پر کردن فیلتر واحد
+    function populateUnitFilter() {
+      const select = document.getElementById('filter-unit');
+      const units = new Set(allEvaluations.map(e => e.employeeUnit).filter(u => u));
+      select.innerHTML = '<option value="all">همه واحدها</option>';
+      Array.from(units).sort().forEach(unit => {
+        const option = document.createElement('option');
+        option.value = unit;
+        option.textContent = unit;
+        select.appendChild(option);
+      });
+    }
+
+    // اعمال فیلترها
+    function applyFilters() {
+      const unitFilter = document.getElementById('filter-unit').value;
+      const groupFilter = document.getElementById('filter-group').value;
+      const searchInput = document.getElementById('search-input').value.toLowerCase().trim();
+
+      filteredEvaluations = allEvaluations.filter(e => {
+        const unitMatch = (unitFilter === 'all' || e.employeeUnit === unitFilter);
+        const groupMatch = (groupFilter === 'all' || e.group.toString() === groupFilter);
+        const searchMatch = !searchInput || 
+                            (e.employeeName?.toLowerCase().includes(searchInput)) ||
+                            (e.employeeId?.toString().includes(searchInput));
+        return unitMatch && groupMatch && searchMatch;
+      });
+
+      currentPage = 1; // بازنشانی به صفحه اول پس از فیلتر
+      renderTable();
+      updateStats();
+      updateCharts();
+      updatePagination();
+    }
+
+    // رندر جدول (با صفحه‌بندی)
+    function renderTable() {
+      const tbody = document.getElementById('report-table-body');
+      tbody.innerHTML = '';
+
+      if (filteredEvaluations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">داده‌ای یافت نشد.</td></tr>';
+        return;
+      }
+
+      const startIndex = (currentPage - 1) * rowsPerPage;
+      const endIndex = Math.min(startIndex + rowsPerPage, filteredEvaluations.length);
+      const pageData = filteredEvaluations.slice(startIndex, endIndex);
+
+      pageData.forEach((e, idx) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${startIndex + idx + 1}</td>
+          <td>${e.employeeId || '-'}</td>
+          <td>${e.employeeName || '-'}</td>
+          <td>${e.employeePosition || '-'}</td>
+          <td>${e.employeeUnit || '-'}</td>
+          <td>${getGroupName(e.group)}</td>
+          <td class="score ${getScoreClass(e.rawScore)}">${e.rawScore.toFixed(2)}</td>
+          <td>${e.unitAverage.toFixed(2)}</td>
+          <td class="score ${getScoreClass(e.adjustedScore)}">${e.adjustedScore.toFixed(2)}</td>
+          <td>${e.date || '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // به‌روزرسانی آمار
+    function updateStats() {
+      const count = filteredEvaluations.length;
+      const total = filteredEvaluations.reduce((sum, e) => sum + e.adjustedScore, 0);
+      const avg = count > 0 ? total / count : 0;
+      const max = count > 0 ? Math.max(...filteredEvaluations.map(e => e.adjustedScore)) : 0;
+      const min = count > 0 ? Math.min(...filteredEvaluations.map(e => e.adjustedScore)) : 0;
+
+      document.getElementById('total-count').textContent = count.toLocaleString('fa-IR');
+      document.getElementById('avg-adjusted').textContent = avg.toFixed(2).toLocaleString('fa-IR');
+      document.getElementById('max-score').textContent = max.toFixed(2).toLocaleString('fa-IR');
+      document.getElementById('min-score').textContent = min.toFixed(2).toLocaleString('fa-IR');
+    }
+
+    // به‌روزرسانی نمودارها
+    function updateCharts() {
+      updateDistributionChart();
+      updateUnitsComparisonChart();
+      updateGroupsDistributionChart();
+      updateRawVsAdjustedChart();
+    }
+
+    function updateDistributionChart() {
+      const ctx = document.getElementById('adjusted-distribution-chart').getContext('2d');
+      const ranges = [0, 0, 0, 0, 0];
+      filteredEvaluations.forEach(e => {
+        const s = e.adjustedScore;
+        if (s < 60) ranges[0]++;
+        else if (s < 70) ranges[1]++;
+        else if (s < 80) ranges[2]++;
+        else if (s < 90) ranges[3]++;
+        else ranges[4]++;
+      });
+
+      if (charts.distribution) charts.distribution.destroy();
+      charts.distribution = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['ضعیف (<60)', 'نیاز به بهبود (60-70)', 'متوسط (70-80)', 'خوب (80-90)', 'عالی (90-100)'],
+          datasets: [{
+            label: 'تعداد پرسنل',
+            data: ranges,
+            backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#2ecc71']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'توزیع امتیاز تعدیل‌شده', font: { size: 14 } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    function updateUnitsComparisonChart() {
+      const units = [...new Set(filteredEvaluations.map(e => e.employeeUnit))];
+      const avgPerUnit = units.map(unit => {
+        const unitEvals = filteredEvaluations.filter(e => e.employeeUnit === unit);
+        const avg = unitEvals.reduce((sum, e) => sum + e.adjustedScore, 0) / unitEvals.length;
+        return { unit, avg };
+      }).sort((a, b) => b.avg - a.avg);
+
+      if (avgPerUnit.length === 0) return;
+
+      const ctx = document.getElementById('units-comparison-chart').getContext('2d');
+      if (charts.units) charts.units.destroy();
+      charts.units = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: avgPerUnit.map(u => u.unit),
+          datasets: [{
+            label: 'میانگین امتیاز تعدیل‌شده',
+            data: avgPerUnit.map(u => u.avg.toFixed(2)),
+            backgroundColor: '#6f42c1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            title: { display: true, text: 'مقایسه میانگین واحدها', font: { size: 14 } }
+          },
+          scales: {
+            x: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function updateGroupsDistributionChart() {
+      const groupCounts = {1: 0, 2: 0, 3: 0};
+      const groupSums = {1: 0, 2: 0, 3: 0};
+      filteredEvaluations.forEach(e => {
+        if (groupCounts.hasOwnProperty(e.group)) {
+          groupCounts[e.group]++;
+          groupSums[e.group] += e.adjustedScore;
+        }
+      });
+
+      const labels = ['عملیاتی/فنی', 'کارشناسی/تخصصی', 'مدیریتی/کلیدی'];
+      const avgs = [
+        groupCounts[1] ? (groupSums[1] / groupCounts[1]).toFixed(2) : 0,
+        groupCounts[2] ? (groupSums[2] / groupCounts[2]).toFixed(2) : 0,
+        groupCounts[3] ? (groupSums[3] / groupCounts[3]).toFixed(2) : 0
+      ];
+
+      const ctx = document.getElementById('groups-distribution-chart').getContext('2d');
+      if (charts.groups) charts.groups.destroy();
+      charts.groups = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: avgs.map(v => parseFloat(v)),
+            backgroundColor: ['#36a2eb', '#ff6384', '#ffce56']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'میانگین امتیاز تعدیل‌شده بر اساس گروه', font: { size: 14 } }
+          }
+        }
+      });
+    }
+
+    function updateRawVsAdjustedChart() {
+      const raw = filteredEvaluations.map(e => e.rawScore);
+      const adj = filteredEvaluations.map(e => e.adjustedScore);
+
+      const ctx = document.getElementById('raw-vs-adjusted-chart').getContext('2d');
+      if (charts.scatter) charts.scatter.destroy();
+      charts.scatter = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'ارتباط امتیاز خام و تعدیل‌شده',
+            data: raw.map((r, i) => ({ x: r, y: adj[i] })),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: 'رابطه امتیاز خام و تعدیل‌شده', font: { size: 14 } }
+          },
+          scales: {
+            x: { title: { display: true, text: 'امتیاز خام' } },
+            y: { title: { display: true, text: 'امتیاز تعدیل‌شده' } }
+          }
+        }
+      });
+    }
+
+    // خروجی اکسل
+    function exportExcel() {
+      if (filteredEvaluations.length === 0) {
+        alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+        return;
+      }
+
+      const data = filteredEvaluations.map(e => ({
+        'ردیف': filteredEvaluations.indexOf(e) + 1,
+        'کد پرسنلی': e.employeeId,
+        'نام و نام خانوادگی': e.employeeName,
+        'سمت': e.employeePosition,
+        'واحد': e.employeeUnit,
+        'گروه': getGroupName(e.group),
+        'امتیاز خام': e.rawScore.toFixed(2),
+        'میانگین واحد': e.unitAverage.toFixed(2),
+        'امتیاز تعدیل‌شده': e.adjustedScore.toFixed(2),
+        'تاریخ ارزیابی': e.date
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "گزارش جامع");
+      XLSX.writeFile(wb, "گزارش_جامع_ارزیابی_تعدیل_شده.xlsx");
+      alert("✅ فایل اکسل با موفقیت دانلود شد!");
+    }
+
+    // خروجی JSON
+    function exportJSON() {
+      if (filteredEvaluations.length === 0) {
+        alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+        return;
+      }
+
+      const filename = `گزارش_جامع_ارزیابی_${new Date().toLocaleDateString('fa-IR').replace(/\//g, '-')}.json`;
+      downloadJSON(filteredEvaluations, filename);
+      alert("✅ فایل JSON با موفقیت دانلود شد!");
+    }
+
+    // بازنشانی فیلترها
+    function resetFilters() {
+      document.getElementById('filter-unit').value = 'all';
+      document.getElementById('filter-group').value = 'all';
+      document.getElementById('search-input').value = '';
+      applyFilters();
+    }
+
+    // بارگذاری داده از فایل JSON آپلود شده
+    function loadJsonFromFile(file) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (!Array.isArray(data)) {
+            throw new Error("داده باید یک آرایه باشد.");
+          }
+
+          allEvaluations = data.map(item => ({
+            ...item,
+            rawScore: parseFloat(item.rawScore) || 0,
+            adjustedScore: parseFloat(item.adjustedScore) || 0,
+            unitAverage: parseFloat(item.unitAverage) || 0,
+            group: parseInt(item.group) || 0
+          }));
+
+          localStorage.setItem('evaluations', JSON.stringify(allEvaluations));
+          populateUnitFilter();
+          applyFilters();
+          alert("✅ داده‌های JSON با موفقیت بارگذاری شدند!");
+
+        } catch (err) {
+          console.error("خطا در خواندن فایل JSON:", err);
+          alert("❌ خطایی در خواندن فایل رخ داد:\n" + err.message);
+          document.getElementById('report-table-body').innerHTML = 
+            '<tr><td colspan="10" class="text-center text-danger">خطا در پردازش فایل JSON</td></tr>';
+          document.getElementById('page-info').textContent = 'صفحه 1 از 1';
+          document.getElementById('prev-page').disabled = true;
+          document.getElementById('next-page').disabled = true;
+        }
+      };
+      reader.onerror = function() {
+        alert("❌ خطایی در خواندن فایل رخ داد.");
+      };
+      reader.readAsText(file);
+    }
+
+    // به‌روزرسانی کنترل‌های صفحه‌بندی
+    function updatePagination() {
+      const totalPages = Math.max(1, Math.ceil(filteredEvaluations.length / rowsPerPage));
+      document.getElementById('page-info').textContent = `صفحه ${currentPage.toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`;
+      
+      document.getElementById('prev-page').disabled = currentPage <= 1;
+      document.getElementById('next-page').disabled = currentPage >= totalPages;
+    }
+
+    // رفتن به صفحه مشخص
+    function goToPage(page) {
+      const totalPages = Math.max(1, Math.ceil(filteredEvaluations.length / rowsPerPage));
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderTable();
+      updatePagination();
+    }
+
+    // بارگذاری اولیه
+    window.onload = loadData;
+  </script>
+</body>
+</html>
