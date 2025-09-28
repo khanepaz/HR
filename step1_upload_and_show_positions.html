@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مرحله ۱: آپلود فایل اکسل و نمایش سمت‌ها</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- XLSX Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    /* تعریف پالت رنگی مدرن */
+    :root {
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --secondary-color: #6f42c1;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --background-light: #f4f7f9;
+      --card-bg: #ffffff;
+      --text-dark: #34495e;
+      --border-color: #e0e6ed;
+    }
+
+    body {
+        font-family: 'Vazirmatn', sans-serif;
+      background: var(--background-light);
+      padding: 30px 0;
+      margin: 0;
+      direction: rtl;
+    }
+
+    .custom-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 40px;
+      border-bottom: 3px solid var(--primary-color);
+      display: inline-block;
+      padding-bottom: 10px;
+    }
+
+    .upload-area {
+      border: 3px dashed var(--primary-color);
+      background: rgba(0, 123, 255, 0.05);
+      padding: 30px;
+      text-align: center;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 123, 255, 0.1);
+      border-color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 123, 255, 0.15);
+    }
+
+    .upload-area.active {
+      background: rgba(0, 123, 255, 0.2);
+      border-color: var(--primary-hover);
+    }
+
+    #upload-360-area {
+      border-color: var(--secondary-color);
+      background: rgba(111, 66, 193, 0.05);
+    }
+
+    #upload-360-area:hover {
+      background: rgba(111, 66, 193, 0.1);
+      border-color: var(--secondary-color);
+      box-shadow: 0 5px 15px rgba(111, 66, 193, 0.15);
+    }
+
+    .upload-icon {
+      font-size: 3em;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    #upload-360-area .upload-icon {
+      color: var(--secondary-color);
+    }
+
+    #file-input,
+    #file-input-360 {
+      display: none;
+    }
+
+    .position-item {
+      background: var(--card-bg);
+      padding: 18px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-right: 5px solid var(--primary-color);
+      transition: all 0.2s;
+    }
+
+    .position-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .position-name {
+      font-weight: bold;
+      color: var(--text-dark);
+      font-size: 1.1em;
+    }
+
+    .position-count {
+      background: var(--primary-color);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.9em;
+    }
+
+    .status.success {
+      background-color: #d4edda !important;
+      color: #155724 !important;
+      border: 1px solid #c3e6cb !important;
+    }
+
+    .status.error {
+      background-color: #f8d7da !important;
+      color: #721c24 !important;
+      border: 1px solid #f5c6cb !important;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="custom-container">
+    <div class="text-center mb-4">
+      <h1>مرحله ۱: آپلود فایل پرسنل و سمت‌ها</h1>
+    </div>
+
+    <div id="status-message" class="alert hidden" role="alert"></div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="upload-area" id="upload-main-area">
+          <span class="upload-icon">📂</span>
+          <p class="mb-1">بارگذاری فایل اکسل پرسنل (شامل نام، کد پرسنلی، سمت و...)</p>
+          <small>برای شروع، فایل خود را اینجا بکشید و رها کنید یا کلیک کنید.</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="upload-area" id="upload-360-area">
+          <span class="upload-icon">👥</span>
+          <p class="mb-1">بارگذاری فایل اکسل ارزیابی‌کنندگان ۳۶۰ درجه</p>
+          <small>این فایل اختیاری است و برای ارزیابی چندمنظوره استفاده می‌شود.</small>
+        </div>
+      </div>
+    </div>
+
+    <input type="file" id="file-input" accept=".xlsx, .xls">
+    <input type="file" id="file-input-360" accept=".xlsx, .xls">
+
+    <div id="positions-list" class="hidden mt-5 pt-4 border-top">
+      <h2 class="mb-3">لیست سمت‌های شناسایی شده</h2>
+      <div class="row g-3" id="positions-container">
+        <!-- Items will be inserted here -->
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+      <button class="btn btn-danger px-4" onclick="goBack()">← بازگشت به داشبورد</button>
+      <button class="btn btn-success px-4" onclick="forward()">مرحله بعد: انتخاب پرسنل ←</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (Optional, but included for completeness) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ==============================
+    // تعریف متغیرهای سراسری
+    const uploadMainArea = document.getElementById('upload-main-area');
+    const upload360Area = document.getElementById('upload-360-area');
+    const fileInput = document.getElementById('file-input');
+    const fileInput360 = document.getElementById('file-input-360');
+    const positionsList = document.getElementById('positions-list');
+    const positionsContainer = document.getElementById('positions-container');
+    const statusDiv = document.getElementById('status-message');
+
+    // ==============================
+    // هندلرهای درگ و دراپ
+    function setupDragAndDrop(area, input) {
+      area.addEventListener('click', () => {
+        input.click();
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        area.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.add('active');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        area.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          area.classList.remove('active');
+        });
+      });
+
+      area.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          handleFile(file, area.id === 'upload-360-area');
+        }
+      });
+
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          handleFile(file, input.id === 'file-input-360');
+        }
+      });
+    }
+
+    setupDragAndDrop(uploadMainArea, fileInput);
+    setupDragAndDrop(upload360Area, fileInput360);
+
+    // ==============================
+    // تابع اصلی پردازش فایل اکسل
+    function handleFile(file, is360 = false) {
+  if (!file) return;
+
+  statusDiv.classList.add('hidden');
+  positionsList.classList.add('hidden');
+  statusDiv.className = 'alert status';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const employees = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+      if (employees.length === 0) {
+        showStatus("❌ فایل اکسل خالی است یا فرمت آن صحیح نیست.", "error");
+        return;
+      }
+
+      if (is360) {
+        localStorage.setItem('evaluators360', JSON.stringify(employees));
+        showStatus(`✅ ${employees.length} ردیف ارزیابی‌کننده 360 درجه با موفقیت بارگذاری شد.`, "success");
+        return;
+      }
+
+      // نرمالایز کردن و ذخیره کردن فیلدهای مهم
+      const normalizedEmployees = employees.map(emp => {
+        const position = (emp['سمت'] || '')
+          .toString()
+          .trim()
+          .replace(/\s+/g, ' ')
+          .normalize('NFC') || 'نامشخص';
+        
+        const unitName = (emp['نام واحد یا دپارتمان'] || '')
+          .toString()
+          .trim()
+          .replace(/\s+/g, ' ')
+          .normalize('NFC') || 'بدون واحد';
+
+        return {
+          ...emp,
+          'سمت': position,
+          'نام واحد یا دپارتمان': unitName
+        };
+      });
+
+      localStorage.setItem('employeeList', JSON.stringify(normalizedEmployees));
+
+      // نمایش سمت‌ها
+      const positions = {};
+      normalizedEmployees.forEach(emp => {
+        const pos = emp['سمت'];
+        positions[pos] = (positions[pos] || 0) + 1;
+      });
+
+      displayPositions(positions);
+
+      showStatus(`✅ ${normalizedEmployees.length} پرسنل با موفقیت بارگذاری شدند.`, "success");
+      positionsList.classList.remove('hidden');
+
+    } catch (error) {
+      console.error(error);
+      showStatus(`❌ خطا در پردازش فایل: ${error.message}. لطفاً از فرمت صحیح فایل اکسل (.xlsx) اطمینان حاصل کنید.`, "error");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+    function displayPositions(positions) {
+      positionsContainer.innerHTML = '';
+      Object.keys(positions)
+        .sort((a, b) => positions[b] - positions[a])
+        .forEach(pos => {
+          const col = document.createElement('div');
+          col.className = 'col-md-6';
+          col.innerHTML = `
+            <div class="position-item">
+              <span class="position-name">${pos || 'بدون سمت'}</span>
+              <span class="position-count">${positions[pos]} نفر</span>
+            </div>
+          `;
+          positionsContainer.appendChild(col);
+        });
+    }
+
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = `alert status ${type}`;
+      statusDiv.classList.remove('hidden');
+    }
+
+    function forward() {
+      if (!localStorage.getItem('employeeList')) {
+        showStatus("⚠️ ابتدا فایل پرسنل را بارگذاری کنید.", "error");
+        return;
+      }
+      window.location.href = "step2_show_employees_by_position.html";
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function loadTemplates() {
+      let templates = localStorage.getItem('jobTemplates');
+      if (!templates) {
+        fetch('templates.json')
+          .then(response => response.json())
+          .then(data => {
+            localStorage.setItem('jobTemplates', JSON.stringify(data));
+          })
+          .catch(error => {
+            console.warn("فایل templates.json محلی پیدا نشد یا خطا داشت.", error);
+          });
+      }
+    }
+
+    window.onload = loadTemplates;
+  </script>
+</body>
+
+</html>

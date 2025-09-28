@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مرحله ۴: گزارش‌های ارزیابی عملکرد</title>
+  <!-- Bootstrap 5 CSS - بدون فاصله اضافه -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js & XLSX - بدون فاصله اضافه -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    :root {
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --secondary-color: #6f42c1;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --background-light: #f4f7f9;
+      --card-bg: #ffffff;
+      --text-dark: #34495e;
+      --border-color: #e0e6ed;
+    }
+
+    body {
+        font-family: 'Vazirmatn', sans-serif;
+      background: var(--background-light);
+      padding: 20px 0;
+      margin: 0;
+      direction: rtl;
+    }
+
+    .custom-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      border-bottom: 3px solid var(--primary-color);
+      display: inline-block;
+      padding-bottom: 10px;
+      width: 100%;
+    }
+
+    h2 {
+      color: var(--text-dark);
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .stat-card {
+      border-right: 5px solid var(--primary-color);
+    }
+    .stat-card.avg { border-right-color: var(--success-color); }
+    .stat-card.count { border-right-color: var(--secondary-color); }
+
+    .stat-title {
+      font-size: 1em;
+      color: #7f8c8d;
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-size: 2.2em;
+      font-weight: bold;
+      color: var(--text-dark);
+      line-height: 1;
+    }
+    .stat-card.avg .stat-value { color: var(--success-color); }
+    .stat-card.count .stat-value { color: var(--secondary-color); }
+
+    .filter-actions {
+      background: rgba(0, 123, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-box {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      height: 400px;
+      position: relative;
+    }
+
+    .report-table-container {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    .report-table .score {
+      font-weight: bold;
+      text-align: center;
+    }
+    .report-table .high { color: var(--success-color); }
+    .report-table .low { color: var(--danger-color); }
+    .report-table .medium { color: var(--warning-color); }
+    .report-table .score-360 {
+      color: var(--secondary-color);
+      font-weight: 500;
+    }
+
+    .edit-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .edit-btn:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="custom-container">
+    <h1>گزارش‌های جامع ارزیابی عملکرد پرسنل</h1>
+    
+    <div class="row g-4 mb-4">
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card count h-100">
+          <div class="card-body">
+            <span class="stat-title">تعداد کل پرسنل ارزیابی شده</span>
+            <span class="stat-value" id="total-evaluated-count">۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card avg h-100">
+          <div class="card-body">
+            <span class="stat-title">میانگین امتیاز کل عملکرد (از ۱۰۰)</span>
+            <span class="stat-value" id="average-final-score">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <span class="stat-title">میانگین امتیاز MBO (اهداف)</span>
+            <span class="stat-value" id="average-mbo-score">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <span class="stat-title">میانگین امتیاز BARS (رفتار)</span>
+            <span class="stat-value" id="average-bars-score">۰.۰۰</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="filter-actions">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <label for="filter-group" class="form-label fw-bold">فیلتر بر اساس گروه:</label>
+          <select id="filter-group" class="form-select" onchange="filterReports()">
+            <option value="all">همه گروه‌ها</option>
+            <option value="1">۱ - عملیاتی/فنی</option>
+            <option value="2">۲ - کارشناسی/تخصصی</option>
+            <option value="3">۳ - مدیریتی/کلیدی</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="filter-position" class="form-label fw-bold">فیلتر بر اساس سمت:</label>
+          <select id="filter-position" class="form-select" onchange="filterReports()">
+            <option value="all">همه سمت‌ها</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="search-input" class="form-label fw-bold">جستجوی نام/کد:</label>
+          <input type="search" id="search-input" class="form-control" oninput="filterReports()" placeholder="جستجو در جدول...">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="d-grid gap-2 ">
+            <button id="export-excel-btn" class="btn btn-success me-2" onclick="exportExcel()">خروجی اکسل 📊</button>
+            <button id="export-json-btn" class="btn btn-secondary" onclick="exportJSON()">خروجی JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <h2>نمودار و توزیع نمرات</h2>
+    <div class="row">
+      <div class="col-12">
+        <div class="chart-box">
+          <canvas id="score-distribution-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <h2>جدول تفصیلی گزارش‌های ارزیابی</h2>
+    <p class="text-muted" style="font-size: 0.95em; margin-top: -15px; margin-bottom: 15px;">
+      ℹ️ <strong>نکته:</strong> امتیاز ۳۶۰ درجه صرفاً جهت بازخورد توسعه‌ای است و در محاسبهٔ امتیاز رسمی عملکرد تأثیری ندارد.
+    </p>
+    <div class="table-responsive report-table-container">
+      <table class="table table-bordered align-middle mb-0">
+        <thead class="table-primary">
+          <tr>
+            <th>کد پرسنلی</th>
+            <th>نام و نام خانوادگی</th>
+            <th>سمت</th>
+            <th>واحد</th> <!-- ✅ ستون جدید -->
+            <th>گروه</th>
+            <th>امتیاز MBO</th>
+            <th>امتیاز BARS</th>
+            <th>امتیاز نهایی</th>
+            <th>میانگین ۳۶۰°</th>
+            <th>تاریخ ارزیابی</th>
+            <th>ویرایش</th>
+          </tr>
+        </thead>
+        <tbody id="report-table-body">
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+      <button class="btn btn-danger" onclick="goBack()">← بازگشت به لیست پرسنل</button>
+      <button class="btn btn-success px-4" onclick="forward()">بازگشت به داشبورد</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS - بدون فاصله اضافه -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let allEvaluations = [];
+    let filteredEvaluations = [];
+    let distributionChart = null;
+
+    // ✅ تابع جدید: دانلود مدرن JSON
+    function downloadJSON(data, filename = 'evaluation_report.json') {
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function getGroupName(groupNum) {
+      const names = { 1: "عملیاتی/فنی", 2: "کارشناسی/تخصصی", 3: "مدیریتی/کلیدی" };
+      return names[groupNum] || "نامشخص";
+    }
+    
+    function getScoreClass(score) {
+        if (score >= 90) return 'high';
+        if (score >= 80) return 'medium';
+        if (score >= 70) return 'medium';
+        if (score < 60) return 'low';
+        return '';
+    }
+
+    function loadData() {
+      const evaluationsJSON = localStorage.getItem('evaluations');
+      if (evaluationsJSON) {
+        allEvaluations = JSON.parse(evaluationsJSON);
+        allEvaluations.forEach(e => {
+            e.finalScore = parseFloat(e.finalScore) || 0;
+            e.mboFinal = parseFloat(e.mboFinal) || 0;
+            e.barsFinal = parseFloat(e.barsFinal) || 0;
+        });
+
+        filteredEvaluations = allEvaluations;
+        populatePositionFilter();
+        renderReports(allEvaluations);
+      } else {
+        document.getElementById('report-table-body').innerHTML = '<tr><td colspan="11" class="text-center text-danger fw-bold">هیچ ارزیابی ذخیره شده‌ای یافت نشد.</td></tr>'; // ✅ colspan=11
+        updateStats(0, 0, 0, 0);
+      }
+    }
+
+    function populatePositionFilter() {
+        const select = document.getElementById('filter-position');
+        const positions = new Set(allEvaluations.map(e => e.employeePosition).filter(p => p));
+        select.innerHTML = '<option value="all">همه سمت‌ها</option>';
+        positions.forEach(pos => {
+            const option = document.createElement('option');
+            option.value = pos;
+            option.textContent = pos;
+            select.appendChild(option);
+        });
+    }
+
+    function filterReports() {
+        const groupFilter = document.getElementById('filter-group').value;
+        const positionFilter = document.getElementById('filter-position').value;
+        const searchInput = document.getElementById('search-input').value.toLowerCase().trim();
+
+        filteredEvaluations = allEvaluations.filter(evaluation => {
+            const groupMatch = (groupFilter === 'all' || evaluation.group.toString() === groupFilter);
+            const positionMatch = (positionFilter === 'all' || evaluation.employeePosition === positionFilter);
+            const searchMatch = !searchInput || 
+                                (evaluation.employeeName?.toLowerCase().includes(searchInput)) ||
+                                (evaluation.employeeId?.toString().includes(searchInput));
+            return groupMatch && positionMatch && searchMatch;
+        });
+
+        renderReports(filteredEvaluations);
+    }
+
+    function renderReports(evaluations) {
+        const tableBody = document.getElementById('report-table-body');
+        tableBody.innerHTML = '';
+
+        let totalFinalScore = 0;
+        let totalMboScore = 0;
+        let totalBarsScore = 0;
+        
+        if (evaluations.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">گزارشی با فیلترهای اعمال شده یافت نشد.</td></tr>'; // ✅ colspan=11
+        } else {
+            evaluations.forEach(eval => {
+                totalFinalScore += eval.finalScore;
+                totalMboScore += eval.mboFinal;
+                totalBarsScore += eval.barsFinal;
+                
+                const row = document.createElement('tr');
+                // ✅ نمایش "واحد" از داده‌های ذخیره‌شده
+                const unitName = eval.employeeUnit || 'بدون واحد';
+                
+                row.innerHTML = `
+                    <td>${eval.employeeId || '-'}</td>
+                    <td>${eval.employeeName || 'نامشخص'}</td>
+                    <td>${eval.employeePosition || 'نامشخص'}</td>
+                    <td>${unitName}</td> <!-- ✅ ستون واحد -->
+                    <td>${getGroupName(eval.group)}</td>
+                    <td class="score ${getScoreClass(eval.mboFinal)}">${eval.mboFinal.toFixed(2)}</td>
+                    <td class="score ${getScoreClass(eval.barsFinal)}">${eval.barsFinal.toFixed(2)}</td>
+                    <td class="score ${getScoreClass(eval.finalScore)}" style="font-size: 1.1em;">${eval.finalScore.toFixed(2)}</td>
+                    <td class="score score-360">${eval.score360 ? eval.score360.average.toFixed(2) : '—'}</td>
+                    <td>${eval.date || '-'}</td>
+                    <td class="text-center">
+                        <button class="edit-btn" onclick="editEvaluation('${eval.employeeId}')">
+                            ویرایش
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        const count = evaluations.length;
+        const avgFinal = count > 0 ? (totalFinalScore / count) : 0;
+        const avgMbo = count > 0 ? (totalMboScore / count) : 0;
+        const avgBars = count > 0 ? (totalBarsScore / count) : 0;
+        
+        updateStats(count, avgFinal, avgMbo, avgBars);
+        updateCharts(evaluations);
+    }
+    
+    function updateStats(count, avgFinal, avgMbo, avgBars) {
+        // استفاده از فرمت فارسی بدون جایگزینی نقطه
+        document.getElementById('total-evaluated-count').textContent = count.toLocaleString('fa-IR');
+        document.getElementById('average-final-score').textContent = avgFinal.toFixed(2).toLocaleString('fa-IR');
+        document.getElementById('average-mbo-score').textContent = avgMbo.toFixed(2).toLocaleString('fa-IR');
+        document.getElementById('average-bars-score').textContent = avgBars.toFixed(2).toLocaleString('fa-IR');
+    }
+
+    function updateCharts(evaluations) {
+        const ctx = document.getElementById('score-distribution-chart').getContext('2d');
+        const scoreRanges = [0, 0, 0, 0, 0];
+        evaluations.forEach(eval => {
+            if (eval.finalScore < 60) scoreRanges[0]++;
+            else if (eval.finalScore < 70) scoreRanges[1]++;
+            else if (eval.finalScore < 80) scoreRanges[2]++;
+            else if (eval.finalScore < 90) scoreRanges[3]++;
+            else scoreRanges[4]++;
+        });
+
+        if (distributionChart) {
+            distributionChart.destroy();
+        }
+
+        distributionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['ضعیف (<60)', 'نیاز به بهبود (60-70)', 'متوسط (70-80)', 'خوب (80-90)', 'عالی (90-100)'],
+                datasets: [{
+                    label: 'تعداد پرسنل',
+                    data: scoreRanges,
+                    backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#2ecc71'],
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'توزیع نمرات عملکرد پرسنل',
+                        font: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'تعداد'
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function exportExcel() {
+      if (filteredEvaluations.length === 0) {
+        alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+        return;
+      }
+
+      const data = filteredEvaluations.map(eval => ({
+        'کد پرسنلی': eval.employeeId,
+        'نام و نام خانوادگی': eval.employeeName,
+        'سمت': eval.employeePosition,
+        'واحد': eval.employeeUnit || 'بدون واحد', // ✅ اضافه شد
+        'گروه ارزیابی': getGroupName(eval.group),
+        'امتیاز MBO': eval.mboFinal.toFixed(2),
+        'امتیاز BARS': eval.barsFinal.toFixed(2),
+        'امتیاز نهایی': eval.finalScore.toFixed(2),
+        'میانگین ۳۶۰ درجه': eval.score360 ? eval.score360.average.toFixed(2) : 'ندارد',
+        'تاریخ ارزیابی': eval.date
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "گزارش ارزیابی");
+      XLSX.writeFile(wb, "گزارش_ارزیابی_عملکرد.xlsx");
+      alert("✅ فایل اکسل با موفقیت دانلود شد!");
+    }
+
+    // ✅ تابع exportJSON کاملاً اصلاح شده
+    function exportJSON() {
+      if (filteredEvaluations.length === 0) {
+        alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+        return;
+      }
+
+      // محاسبه میانگین واحد بر اساس داده‌های فیلترشده
+      const totalScore = filteredEvaluations.reduce((sum, e) => sum + (e.finalScore || 0), 0);
+      const unitAverage = (totalScore / filteredEvaluations.length).toFixed(2);
+
+      // ساخت ساختار جامع با میانگین واحد
+      const exportData = {
+        metadata: {
+          generatedAt: new Date().toLocaleString('fa-IR'),
+          totalEmployees: filteredEvaluations.length,
+          unitAverage: parseFloat(unitAverage),
+          filters: {
+            group: document.getElementById('filter-group').value,
+            position: document.getElementById('filter-position').value,
+            search: document.getElementById('search-input').value
+          }
+        },
+        evaluations: filteredEvaluations
+      };
+
+      // دانلود با روش مدرن
+      const filename = `ارزیابی_واحد_${new Date().toLocaleDateString('fa-IR').replace(/\//g, '-')}.json`;
+      downloadJSON(exportData, filename);
+      alert("✅ فایل JSON با میانگین واحد با موفقیت دانلود شد!");
+    }
+    
+    function goBack() {
+      window.location.href = "step2_show_employees_by_position.html";
+    }
+
+    function forward() {
+      window.location.href = "index.html";
+    }
+    
+    function editEvaluation(employeeId) {
+        const employeeList = JSON.parse(localStorage.getItem('employeeList') || '[]');
+        const employeeToEdit = employeeList.find(e => e['کد پرسنلی']?.toString().trim() === employeeId);
+        
+        if (employeeToEdit) {
+            localStorage.setItem('selectedEmployee', JSON.stringify(employeeToEdit));
+            window.location.href = "step3_evaluation_form.html";
+        } else {
+            alert("❌ پرسنل اصلی برای ویرایش یافت نشد. ممکن است فایل اصلی پرسنل مجددا بارگذاری نشده باشد.");
+        }
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>

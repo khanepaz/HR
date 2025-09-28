@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مرحله ۲: انتخاب پرسنل برای ارزیابی</title>
+  <!-- Bootstrap 5 CSS - بدون فاصله اضافه -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    :root {
+      --primary-color: #007bff;
+      --primary-hover: #0056b3;
+      --secondary-color: #6f42c1;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --background-light: #f8fafc;
+      --card-bg: #ffffff;
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --border-color: #e2e8f0;
+      --hover-bg: #f1f5f9;
+      --evaluated-bg: #f0fdf4;
+      --evaluated-border: #bbf7d0;
+    }
+
+    body {
+        font-family: 'Vazirmatn', sans-serif;
+      background: var(--background-light);
+      padding: 20px 0;
+      margin: 0;
+      direction: rtl;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    .custom-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .custom-container:hover {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 32px;
+      font-weight: 700;
+      font-size: 1.8rem;
+      position: relative;
+      padding-bottom: 12px;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 4px;
+      background: var(--primary-color);
+      border-radius: 2px;
+    }
+
+    .position-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-button {
+      background: var(--background-light);
+      color: var(--text-dark);
+      border: 1px solid var(--border-color);
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-button:hover {
+      background: var(--hover-bg);
+      color: var(--primary-hover);
+      border-color: var(--primary-color);
+    }
+
+    .tab-button.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+    }
+
+    .tab-button .count {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .employees-table-container {
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    tbody tr {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background-color: var(--hover-bg) !important;
+      transform: scale(1.005);
+    }
+
+    tbody tr.evaluated-row {
+      background-color: var(--evaluated-bg) !important;
+      border-left: 4px solid var(--success-color);
+    }
+
+    tbody tr.evaluated-row:hover {
+      background-color: #e6f9ed !important;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 110px;
+    }
+
+    .status-badge.evaluated-status {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .status-badge.pending-status {
+      background: var(--warning-color);
+      color: var(--text-dark);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 30px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pagination button {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      background: white;
+      color: var(--text-dark);
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+
+    .pagination button.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-message.error {
+      background-color: #fee !important;
+      color: #c53030 !important;
+      border: 1px solid #feb2b2 !important;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      .custom-container {
+        padding: 20px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      .tab-button {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+      .nav-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+      .pagination button {
+        width: 38px;
+        height: 38px;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="custom-container">
+    <h1>مرحله ۲: انتخاب پرسنل برای ارزیابی</h1>
+
+    <div id="error-message" class="alert alert-danger hidden" role="alert"></div>
+
+    <div id="main-content">
+      <div id="position-tabs" class="position-tabs">
+        <button class="tab-button active" data-position="all">همه پرسنل</button>
+      </div>
+
+      <input 
+        type="text" 
+        id="search-input" 
+        class="form-control mb-4"
+        placeholder="جستجوی پرسنل بر اساس نام، کد، سمت یا واحد..." 
+        style="max-width: 600px; margin: 0 auto 24px;"
+      />
+
+      <div class="table-responsive employees-table-container">
+        <table id="employees-table" class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>نام و نام خانوادگی</th>
+              <th>کد پرسنلی</th>
+              <th>سمت</th>
+              <th>واحد</th> <!-- ✅ ستون جدید -->
+              <th>وضعیت ارزیابی</th>
+            </tr>
+          </thead>
+          <tbody id="employees-tbody">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-5 pt-3 border-top">
+      <button class="btn btn-danger nav-btn px-4" onclick="goBack()">← بازگشت به آپلود</button>
+      <button class="btn btn-success nav-btn px-4" onclick="forward()">مشاهده گزارش‌ها (مرحله ۴) ←</button>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS - بدون فاصله اضافه -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // متغیرهای سراسری
+    let allEmployees = [];
+    let jobTemplates = {};
+    let evaluatedEmployees = {};
+    const tbody = document.getElementById('employees-tbody');
+    const paginationEl = document.getElementById('pagination');
+    const positionTabs = document.getElementById('position-tabs');
+    const errorMessage = document.getElementById('error-message');
+    const mainContent = document.getElementById('main-content');
+    const searchInput = document.getElementById('search-input');
+
+    let currentEmployees = [];
+    let filteredEmployees = [];
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let activePosition = 'all';
+
+    function showStatus(message, type) {
+      errorMessage.textContent = message;
+      errorMessage.className = `alert status-message ${type} hidden`;
+      errorMessage.classList.remove('hidden');
+    }
+
+    function getGroupName(groupNum) {
+      const names = { 1: "عملیاتی/فنی", 2: "کارشناسی/تخصصی", 3: "مدیریتی/کلیدی" };
+      return names[groupNum] || "نامشخص";
+    }
+
+    function performSearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (query === '') {
+        filteredEmployees = [...currentEmployees];
+      } else {
+        filteredEmployees = currentEmployees.filter(emp => {
+          const name = (emp['نام و نام خانوادگی'] || '').toLowerCase();
+          const code = (emp['کد پرسنلی']?.toString() || '').toLowerCase();
+          const pos = (emp['سمت'] || '').toLowerCase();
+          const unit = (emp['نام واحد یا دپارتمان'] || '').toLowerCase(); // ✅ جستجو در واحد
+          return name.includes(query) || code.includes(query) || pos.includes(query) || unit.includes(query);
+        });
+      }
+      currentPage = 1;
+      renderTable();
+    }
+
+    function loadData() {
+      const employeesJSON = localStorage.getItem('employeeList');
+      const templatesJSON = localStorage.getItem('jobTemplates');
+      const evaluatedJSON = localStorage.getItem('evaluatedEmployees');
+
+      if (!employeesJSON) {
+        showStatus("❌ خطای بارگذاری: لطفاً ابتدا در مرحله ۱، فایل پرسنل را بارگذاری کنید.", "error");
+        mainContent.classList.add('hidden');
+        return;
+      }
+
+      try {
+        allEmployees = JSON.parse(employeesJSON);
+        jobTemplates = templatesJSON ? JSON.parse(templatesJSON) : {};
+        evaluatedEmployees = evaluatedJSON ? JSON.parse(evaluatedJSON) : {};
+      } catch (e) {
+        showStatus("❌ خطا در خواندن داده‌ها. لطفاً مجدداً آپلود کنید.", "error");
+        mainContent.classList.add('hidden');
+        return;
+      }
+
+      if (allEmployees.length === 0) {
+        showStatus("❌ فایل پرسنل بارگذاری‌شده خالی است.", "error");
+        mainContent.classList.add('hidden');
+        return;
+      }
+
+      const positions = {};
+      allEmployees.forEach(emp => {
+        const pos = emp['سمت']?.trim() || 'نامشخص';
+        positions[pos] = (positions[pos] || 0) + 1;
+      });
+      createPositionTabs(positions);
+
+      currentEmployees = [...allEmployees];
+      filteredEmployees = [...allEmployees];
+
+      searchInput.addEventListener('input', performSearch);
+      setupTabClicks();
+      renderTable();
+    }
+
+    function createPositionTabs(positions) {
+      positionTabs.innerHTML = '';
+      const allBtn = document.createElement('button');
+      allBtn.className = 'tab-button active';
+      allBtn.dataset.position = 'all';
+      allBtn.textContent = `همه پرسنل`;
+      allBtn.innerHTML += ` <span class="count">${allEmployees.length}</span>`;
+      positionTabs.appendChild(allBtn);
+      
+      Object.keys(positions).sort().forEach(pos => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-button';
+        btn.dataset.position = pos;
+        btn.textContent = pos;
+        btn.innerHTML += ` <span class="count">${positions[pos]}</span>`;
+        positionTabs.appendChild(btn);
+      });
+    }
+
+    function setupTabClicks() {
+      positionTabs.querySelectorAll('.tab-button').forEach(btn => {
+        btn.onclick = function() {
+          document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          activePosition = this.dataset.position;
+          
+          if (activePosition === 'all') {
+            currentEmployees = [...allEmployees];
+          } else {
+            currentEmployees = allEmployees.filter(emp => 
+              (emp['سمت']?.trim() || 'نامشخص') === activePosition
+            );
+          }
+          performSearch();
+        };
+      });
+    }
+
+    function renderTable() {
+  const start = (currentPage - 1) * rowsPerPage;
+  const end = start + rowsPerPage;
+  const paginated = filteredEmployees.slice(start, end);
+
+  tbody.innerHTML = '';
+  if (paginated.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="6" class="text-center text-muted py-4">موردی یافت نشد.</td>`;
+    tbody.appendChild(tr);
+  } else {
+    paginated.forEach((emp, idx) => {
+      const empId = emp['کد پرسنلی']?.toString().trim() || '';
+      const isEvaluated = !!evaluatedEmployees[empId];
+      const row = document.createElement('tr');
+      row.className = isEvaluated ? 'evaluated-row' : '';
+      row.onclick = () => selectEmployee(emp);
+      
+      const badge = `<span class="status-badge ${isEvaluated ? 'evaluated-status' : 'pending-status'}">
+        ${isEvaluated ? '✅ ارزیابی شده' : '⏳ در انتظار'}
+      </span>`;
+
+      const unitName = emp['نام واحد یا دپارتمان'] || '—';
+
+      row.innerHTML = `
+        <td>${start + idx + 1}</td>
+        <td><strong>${emp['نام و نام خانوادگی'] || '—'}</strong></td>
+        <td>${empId || '—'}</td>
+        <td>${emp['سمت']?.trim() || 'نامشخص'}</td>
+        <td>${unitName}</td>
+        <td>${badge}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+  renderPagination();
+}
+    function renderPagination() {
+      const totalPages = Math.ceil(filteredEmployees.length / rowsPerPage);
+      paginationEl.innerHTML = '';
+      if (totalPages <= 1) return;
+
+      const maxVisible = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+      if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+      }
+
+      const prev = document.createElement('button');
+      prev.textContent = '«';
+      prev.disabled = currentPage === 1;
+      prev.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+      paginationEl.appendChild(prev);
+
+      for (let i = startPage; i <= endPage; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.onclick = () => { currentPage = i; renderTable(); };
+        paginationEl.appendChild(btn);
+      }
+
+      const next = document.createElement('button');
+      next.textContent = '»';
+      next.disabled = currentPage === totalPages;
+      next.onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+      paginationEl.appendChild(next);
+    }
+
+    function selectEmployee(employee) {
+      const empId = employee['کد پرسنلی']?.toString().trim();
+      if (!empId) {
+        alert("❌ خطا: پرسنل انتخابی کد پرسنلی معتبری ندارد.");
+        return;
+      }
+
+      let group = 1;
+      const position = employee['سمت']?.trim();
+      if (jobTemplates[position]?.group) {
+        group = jobTemplates[position].group;
+      } else if (position && (position.includes("مدیر") || position.includes("سرپرست") || position.includes("رییس"))) {
+        group = 3;
+      } else if (position && (position.includes("کارشناس") || position.includes("مهندس"))) {
+        group = 2;
+      }
+
+      localStorage.setItem('selectedEmployee', JSON.stringify(employee));
+      localStorage.setItem('selectedGroup', group.toString());
+      window.location.href = 'step3_evaluation_form.html';
+    }
+
+    function forward() {
+      window.location.href = 'step4_reports.html';
+    }
+
+    function goBack() {
+      window.location.href = 'step1_upload_and_show_positions.html';
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 سیستم ارزیابی عملکرد پرسنل</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #3498db;
+      --primary-dark: #2980b9;
+      --secondary: #9b59b6;
+      --success: #27ae60;
+      --danger: #e74c3c;
+      --light: #f8f9fa;
+      --dark: #2c3e50;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--dark);
+      color: white;
+      padding: 20px 0;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      right: 0; /* چون dir="rtl" است */
+      transition: transform 0.3s ease;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); /* سایه از سمت چپ */
+      z-index: 1040;
+    }
+
+    .sidebar-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.4em;
+      margin: 10px 0;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+ 
+    /* @media (max-width: 768px) {
+      .sidebar-menu {
+        padding: 1px 96px 0px 0px !important;
+    }
+  } */
+    .sidebar-menu li {
+      margin: 5px 0;
+    }
+
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      transition: all 0.3s;
+      border-right: 4px solid transparent; /* در RTL، border-right = سمت چپ */
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-right: 4px solid var(--primary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-right: 280px;
+      padding: 30px;
+      transition: margin-right 0.3s ease;
+    }
+
+    /* Toggle Button - فقط در موبایل */
+    .toggle-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px; /* در RTL، چپ = راست */
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 1.5em;
+      z-index: 1050;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Icons */
+    .icon-upload::before { content: "📤"; }
+    .icon-people::before { content: "👥"; }
+    .icon-eval::before { content: "📝"; }
+    .icon-report::before { content: "📊"; }
+    .icon-template::before { content: "⚙️"; }
+    .icon-dashboard::before { content: "🏠"; }
+
+    /* سایر استایل‌ها (welcome, stats, charts و ...) */
+    .page-title {
+      color: var(--dark);
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-icon {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+      color: var(--primary);
+    }
+
+    .stat-title {
+      font-size: 1.1em;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: var(--primary-dark);
+    }
+
+    .chart-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      margin-bottom: 30px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card canvas {
+      flex-grow: 1;
+      min-height: 0;
+    }
+
+    .chart-title {
+      color: var(--dark);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--light);
+      text-align: center;
+    }
+
+    .welcome-section {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .welcome-section h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
+    .welcome-section p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quick-btn {
+      background: white;
+      color: var(--primary-dark);
+      border: 2px solid var(--primary);
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .quick-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    /* Responsive: موبایل */
+    @media (max-width: 991.98px) {
+      .toggle-btn {
+        display: block;
+      }
+
+      .sidebar {
+        transform: translateX(100%); /* کاملاً مخفی در سمت راست */
+      }
+
+      .sidebar.active {
+        transform: translateX(0); /* کاملاً نمایش داده شود */
+      }
+
+      .main-content {
+        margin-right: 0;
+        padding: 20px;
+      }
+
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+
+      .quick-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Toggle Button for Mobile -->
+  <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="icon-dashboard" style="font-size: 2.5em; margin-bottom: 10px;"></div>
+      <h2>سیستم ارزیابی عملکرد</h2>
+      <p>نسخه 1.0</p>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="index.html" class="active"><span class="icon-dashboard"></span> داشبورد اصلی</a></li>
+      <li><a href="step1_upload_and_show_positions.html"><span class="icon-upload"></span> آپلود فایل اکسل</a></li>
+      <li><a href="step2_show_employees_by_position.html"><span class="icon-people"></span> انتخاب پرسنل</a></li>
+      <li><a href="step3_evaluation_form.html"><span class="icon-eval"></span> ارزیابی فردی</a></li>
+      <li><a href="step4_reports.html"><span class="icon-report"></span> گزارش‌ها</a></li>
+      <li><a href="template_manager.html"><span class="icon-template"></span> مدیریت الگوها</a></li>
+      <li><a href="step5_aggregate.html"><span class="icon-template"></span> تجمیع ارزیابی</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="welcome-section">
+      <h1>به سیستم ارزیابی عملکرد خوش آمدید</h1>
+      <p>یک سیستم هوشمند، بدون نیاز به سرور و کاملاً سفارشی‌سازی شده برای سازمان شما</p>
+      <div class="quick-actions">
+        <a href="step1_upload_and_show_positions.html" class="quick-btn">📤 شروع با آپلود فایل</a>
+        <a href="template_manager.html" class="quick-btn">⚙️ مدیریت الگوها</a>
+      </div>
+    </div>
+
+    <div class="page-title">
+      <h1>📊 آمار و شاخص‌های لحظه‌ای</h1>
+      <div>
+        <span id="last-update">آخرین به‌روزرسانی: در حال بارگذاری...</span>
+      </div>
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-title">تعداد کل پرسنل</div>
+        <div class="stat-value" id="total-employees">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-title">ارزیابی‌های انجام شده</div>
+        <div class="stat-value" id="total-evaluations">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-title">میانگین نمره کل</div>
+        <div class="stat-value" id="avg-score">0.00</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-title">بالاترین نمره</div>
+        <div class="stat-value" id="max-score">0</div>
+      </div>
+    </div>
+
+    <!-- Charts with Bootstrap Grid -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h3 class="chart-title">توزیع پرسنل بر اساس گروه</h3>
+          <canvas id="groupDistributionChart"></canvas> <!-- height removed -->
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h3 class="chart-title">توزیع نمرات ارزیابی</h3>
+          <canvas id="scoreDistributionChart"></canvas> <!-- height removed -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let groupDistributionChart = null;
+      let scoreDistributionChart = null;
+
+      function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+      }
+
+      function isMobile() {
+      return window.innerWidth <= 991;
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    // بستن سایدبار با کلیک خارج از آن (در موبایل)
+    document.addEventListener('click', function(e) {
+      if (isMobile()) {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.querySelector('.toggle-btn');
+        if (sidebar.classList.contains('active') && 
+            !sidebar.contains(e.target) && 
+            (!toggleBtn || !toggleBtn.contains(e.target))) {
+          sidebar.classList.remove('active');
+        }
+      }
+    });
+
+
+      function loadData() {
+        try {
+          const employees = JSON.parse(localStorage.getItem('employeeList') || '[]');
+          const evaluations = JSON.parse(localStorage.getItem('evaluations') || '[]');
+
+          document.getElementById('total-employees').textContent = employees.length;
+          document.getElementById('total-evaluations').textContent = evaluations.length;
+
+          if (evaluations.length > 0) {
+            const scores = evaluations.map(e => e.finalScore);
+            const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+            const maxScore = Math.max(...scores);
+
+            document.getElementById('avg-score').textContent = avgScore.toFixed(2);
+            document.getElementById('max-score').textContent = maxScore.toFixed(2);
+          } else {
+            document.getElementById('avg-score').textContent = "0.00";
+            document.getElementById('max-score').textContent = "0";
+          }
+
+          document.getElementById('last-update').textContent = `آخرین به‌روزرسانی: ${new Date().toLocaleString('fa-IR')}`;
+
+          renderCharts(evaluations, employees);
+
+        } catch (error) {
+          console.error("خطا در بارگذاری داده‌ها:", error);
+        }
+      }
+
+      // Render Charts
+      function renderCharts(evaluations, employees) {
+  // Group Distribution Chart
+  const ctx1 = document.getElementById('groupDistributionChart').getContext('2d');
+  if (groupDistributionChart) groupDistributionChart.destroy();
+  
+  const groupCounts = [0, 0, 0]; // Group 1, 2, 3
+  const jobTemplates = JSON.parse(localStorage.getItem('jobTemplates') || '{}');
+  
+  employees.forEach(emp => {
+    let group = 1; // پیش‌فرض: عملیاتی/فنی
+    const position = (emp['سمت'] || '').toString().trim();
+    
+    // اول بررسی می‌کنیم که آیا برای این سمت الگویی تعریف شده؟
+    if (jobTemplates[position] && jobTemplates[position].group) {
+      group = jobTemplates[position].group;
+    } else {
+      // اگر الگویی تعریف نشده، بر اساس کلمات کلیدی تصمیم‌گیری می‌کنیم
+      if (position.includes("مدیر") || position.includes("سرپرست") || position.includes("رییس") || position.includes("رئیس")) {
+        group = 3;
+      } else if (position.includes("کارشناس") || position.includes("مهندس") || position.includes("تکنسین") || position.includes("آموزش")) {
+        group = 2;
+      } else {
+        group = 1;
+      }
+    }
+    
+    // اطمینان از اینکه group بین 1 تا 3 باشد (گروه 4 و بالاتر به 3 تبدیل می‌شن)
+    if (group >= 3) group = 3;
+    else if (group <= 1) group = 1;
+    else group = 2;
+    
+    groupCounts[group - 1]++;
+  });
+  
+  groupDistributionChart = new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+      labels: ['عملیاتی/فنی', 'کارشناسی/تخصصی', 'مدیریتی/کلیدی'],
+      datasets: [{
+        data: groupCounts,
+        backgroundColor: ['#3498db', '#9b59b6', '#e74c3c']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // Score Distribution Chart (همان قبلی، بدون تغییر)
+  const ctx2 = document.getElementById('scoreDistributionChart').getContext('2d');
+  if (scoreDistributionChart) scoreDistributionChart.destroy();
+  
+  if (evaluations.length === 0) {
+    scoreDistributionChart = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: ['بدون داده'],
+        datasets: [{
+          label: 'تعداد ارزیابی',
+          data: [0],
+          backgroundColor: ['#95a5a6']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+      }
+    });
+    return;
+  }
+  
+  const scoreRanges = [0, 0, 0, 0, 0];
+  evaluations.forEach(eval => {
+    if (eval.finalScore < 60) scoreRanges[0]++;
+    else if (eval.finalScore < 70) scoreRanges[1]++;
+    else if (eval.finalScore < 80) scoreRanges[2]++;
+    else if (eval.finalScore < 90) scoreRanges[3]++;
+    else scoreRanges[4]++;
+  });
+  
+  scoreDistributionChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['ضعیف (<60)', 'نیاز به بهبود (60-70)', 'متوسط (70-80)', 'خوب (80-90)', 'عالی (90-100)'],
+      datasets: [{
+        label: 'تعداد پرسنل',
+        data: scoreRanges,
+        backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#2ecc71']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    }
+  });
+}
+
+
+      window.onload = function () {
+        loadData();
+
+        const currentPath = window.location.pathname.split('/').pop();
+        const menuItems = document.querySelectorAll('.sidebar-menu a');
+        menuItems.forEach(item => {
+          if (item.getAttribute('href') === currentPath) {
+            item.classList.add('active');
+          } else {
+            item.classList.remove('active');
+          }
+        });
+      };
+
+      setInterval(loadData, 30000);
+    </script>
+</body>
+
+</html>
